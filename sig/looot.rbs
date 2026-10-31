@@ -1,0 +1,125 @@
+module Looot
+  VERSION: String
+  DEFAULT_BASE_URL: String
+  DEFAULT_TIMEOUT: Integer
+  DEFAULT_MAX_RETRIES: Integer
+
+  def self.new: (**untyped options) -> Client
+
+  type json = Hash[String, untyped]
+  type fallback = bool | Hash[Symbol | String, untyped]
+  type prefer = "balanced" | "cheapest" | "reliable" | "fastest"
+
+  class LoootError < StandardError
+    attr_reader status: Integer
+    attr_reader code: String
+    attr_reader request_id: String?
+    attr_reader body: untyped
+    attr_reader retry_after_seconds: Numeric?
+    attr_reader top_up: json?
+    attr_reader retry_hint: String?
+    attr_reader whose_error: String?
+    attr_reader details: untyped
+    def retryable?: () -> bool
+    def checkout_url: () -> String?
+    def dashboard_url: () -> String?
+  end
+  Error: singleton(LoootError)
+
+  class Response < Struct[untyped]
+    attr_accessor status: Integer
+    attr_accessor headers: Hash[String, String]
+    attr_accessor body: String
+  end
+
+  class Model
+    def initialize: (?json data) -> void
+    def []: (String | Symbol key) -> untyped
+    def dig: (*untyped keys) -> untyped
+    def to_h: () -> json
+  end
+
+  class RunError < Model
+    def code: () -> String?
+    def message: () -> String?
+    def request_id: () -> String?
+    def whose_error: () -> String?
+    def retry_hint: () -> String?
+    def retryable?: () -> bool
+  end
+
+  class RouteAttempt < Model
+    def n: () -> Integer?
+    def endpoint_id: () -> String?
+    def outcome: () -> String?
+    def charged_usd: () -> Numeric?
+    def ms: () -> Integer?
+  end
+
+  class Route < Model
+    def served_by: () -> String?
+    def outcome: () -> String?
+    def charged_usd: () -> Numeric?
+    def capped: () -> bool?
+    def attempts: () -> Array[RouteAttempt]?
+  end
+
+  class Run < Model
+    def run_id: () -> String?
+    def status: () -> String?
+    def endpoint_id: () -> String?
+    def outcome: () -> String?
+    def result: () -> untyped
+    def estimated_cost: () -> Numeric?
+    def actual_cost: () -> Numeric?
+    def error: () -> RunError?
+    def route: () -> Route?
+    def final_charge_micros: () -> Integer?
+    def terminal?: () -> bool
+    def success?: () -> bool
+    def failed?: () -> bool
+    def download_path: () -> String?
+  end
+
+  class TopUpLink < Model
+    def minimum_usd: () -> Numeric?
+    def checkout_url: () -> String?
+    def dashboard_url: () -> String?
+    def url: () -> String?
+  end
+
+  class Balance < Model
+    def available: () -> Numeric?
+    def reserved: () -> Numeric?
+    def top_up_link: () -> TopUpLink?
+    def covers?: (Numeric estimate_usd) -> bool
+  end
+
+  class Client
+    def initialize: (?token: String?, ?api_key: String?, ?base_url: String, ?timeout: Numeric,
+                     ?max_retries: Integer, ?agent: String?, ?transport: untyped, ?sleeper: untyped) -> void
+    def catalog_overview: (?depth: String?, ?category: String?, ?platform: String?, ?topic: String?) -> Model
+    def public_catalog: (**untyped) -> Model
+    def public_catalog_item: (String catalog_item_id) -> Model
+    def compare_public_catalog: (Array[String] ids) -> Model
+    def search: (?String? q, **untyped) -> Model
+    def inspect_endpoint: (String endpoint_id) -> Model
+    def discover: (?String? query, **untyped) -> Model
+    def catalog_endpoints: (**untyped) -> Model
+    def run: (String endpoint_id, ?Hash[untyped, untyped] input, ?idempotency_key: String?, ?wait: (Integer | bool)?,
+              ?fallback: fallback?, ?output: Hash[untyped, untyped]?) -> Run
+    def run_job: (String job, ?Hash[untyped, untyped] input, ?prefer: prefer?, ?fallback: fallback?, ?wait: (Integer | bool)?,
+                  ?idempotency_key: String?, ?output: Hash[untyped, untyped]?) -> Run
+    def get_run: (String run_id, ?fields: (String | Array[String])?, ?max_items: Integer?) -> Run
+    def list_runs: (**untyped) -> Model
+    def cancel_run: (String run_id) -> Run
+    def run_attempts: (String run_id) -> Model
+    def wait_for_run: (String run_id, ?timeout: Numeric, ?interval: Numeric, ?max_interval: Numeric) -> Run
+    def balance: () -> Balance
+    def list_top_ups: () -> Model
+    def ledger: (?limit: Integer?, ?cursor: String?) -> Model
+    def whoami: () -> Model
+    def capability_request: (title: String, description: String, **untyped) -> Model
+    def download_media: (Run | String run_or_path) -> String
+  end
+end
