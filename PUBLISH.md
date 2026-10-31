@@ -30,10 +30,12 @@ The gem name `looot` was free on RubyGems.org on 2026-10-31 (`GET /api/v1/gems/l
    git push origin v0.1.0
    ```
 
-3. The workflow checks the tag matches `Looot::VERSION`, runs the tests, builds the gem and pushes
-   it. Check https://rubygems.org/gems/looot afterwards.
+3. The workflow checks the tag matches `Looot::VERSION`, runs the tests, then `rubygems/release-gem`
+   runs `bundle exec rake release`. That task comes from `require "bundler/gem_tasks"` in the
+   Rakefile. It builds the gem into `pkg/`, skips the git push because the tag already exists, and
+   pushes the gem. Check https://rubygems.org/gems/looot afterwards.
 
 ## If trusted publishing is not set up
 
-The workflow fails at the push step and nothing is published. Fix the publisher settings in step 2
+The workflow fails at the "Configure trusted publishing credentials" step and nothing is published. Fix the publisher settings in step 2
 (the workflow filename and environment must match exactly) and re-run the job.
