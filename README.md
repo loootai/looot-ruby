@@ -7,21 +7,13 @@ It has no runtime dependencies. It uses `net/http` from the Ruby standard librar
 
 ## Install
 
-```sh
-gem install looot
-```
-
-Or in a Gemfile:
+The gem is not on RubyGems.org yet. Install it from GitHub in a Gemfile:
 
 ```ruby
-gem "looot", "~> 0.1"
+gem "looot", git: "https://github.com/loootai/looot-ruby", branch: "main"
 ```
 
-Until the first release is on RubyGems.org, install from GitHub:
-
-```ruby
-gem "looot", git: "https://github.com/loootai/looot-ruby", tag: "v0.1.0"
-```
+After the first RubyGems release, `gem install looot` or `gem "looot", "~> 0.1"` will work too.
 
 ## Quickstart
 
